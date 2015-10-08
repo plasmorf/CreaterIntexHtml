@@ -19,11 +19,18 @@ public class Processing implements Runnable {
     @Override
     public void run() {
         InputStreamReader in = null;
+        OutputStreamWriter out = null;
         StringBuilder queryStr = new StringBuilder();
         char c;
 
         try {
             in = new InputStreamReader(socket.getInputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            out = new OutputStreamWriter(socket.getOutputStream());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -43,20 +50,20 @@ public class Processing implements Runnable {
         String cmd = queryStr.toString().split(" ")[0].trim().toUpperCase();
 
         if (cmd.compareTo("GET") == 1)  {
-
+            getResource(out);
         }
         else if (cmd.compareTo("HEAD") == 1){
-
+            getHead(out);
         }
 
 
     }
 
-    private OutputStreamWriter getResource(){
+    private void getResource(OutputStreamWriter out){
 
     };
 
-    private OutputStreamWriter getHead(){
+    private void getHead(OutputStreamWriter out){
 
     };
 
