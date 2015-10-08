@@ -69,12 +69,27 @@ public class Processing implements Runnable {
                 }
         }
 
+        try {
+            out.flush();
+
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    private void getResource(String path, OutputStreamWriter out, QueryType queryType){
+    private void getResource(String path, OutputStreamWriter out, QueryType queryType) {
         System.out.println("GET recieved");
+        File file = new File(path);
 
-        if (path.lastIndexOf("/")==path.length()-1) {
+        if (!file.exists()){
+            try {
+                out.write("404 Not Found");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        else if (file.isDirectory()) {
             FileDir fd = new FileDir(path, out, queryType);
 
             try {
@@ -85,7 +100,6 @@ public class Processing implements Runnable {
             ;
         }
         else{
-            File file = new File(path);
             InputStreamReader isr = null;
             char buf[] = new char[4096];
             int len;
@@ -99,8 +113,10 @@ public class Processing implements Runnable {
             try {
                 out.write("HTTP/1.0 200 OK\r\n");
                 //минимально необходимые заголовки, тип и длина
-                out.write("Content-Type: " + new MimetypesFileTypeMap().getContentType(file) + "\r\n");
-                out.write("Content-Length: " + file.length());
+                String contentType = new MimetypesFileTypeMap().getContentType(file);
+                out.write("Content-Type: " + contentType + "\r\n");
+                out.write("Content-Length: " + file.length() + "\r\n");
+                out.write("Connection: close \r\n");
             } catch (IOException e) {
                 e.printStackTrace();
             }

@@ -4,6 +4,7 @@
 abstract class HtmlWrap {
     static String getHead(String title, String contentType, long contentLength){
         StringBuilder s = new StringBuilder();
+/*
         s.append("HTTP/1.0 200 OK\r\n");
         //минимально необходимые заголовки, тип и длина
         s.append("Content-Type: " + contentType + "\r\n"); //text/html
@@ -11,6 +12,7 @@ abstract class HtmlWrap {
             s.append("Content-Length: " + contentLength);
         //пустая строка отделяет заголовки от тела
         s.append("\r\n");
+*/
 
         // Заголовок
         s.append("<!DOCTYPE html>\n");

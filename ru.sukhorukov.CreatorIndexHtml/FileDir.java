@@ -19,6 +19,13 @@ public class FileDir {
         // «аполн€ем массив и сортируем его
         files = sort(fillList(path));
 
+        text.add("HTTP/1.0 200 OK\r\n");
+        //минимально необходимые заголовки, тип и длина
+        text.add("Content-Type: text/html \r\n"); //text/html
+        //пуста€ строка отдел€ет заголовки от тела
+        text.add("\r\n");
+
+
         text.add(HtmlWrap.getHead(path, "html/text", 0));
 
         if (queryType == QueryType.GET) {
