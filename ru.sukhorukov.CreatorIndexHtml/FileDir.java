@@ -1,4 +1,5 @@
 import java.io.*;
+import java.net.URLEncoder;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -8,7 +9,7 @@ import java.util.stream.Stream;
 public class FileDir {
     private String name;
 
-    public FileDir(String path, OutputStream os){
+    public FileDir(String path, OutputStreamWriter os, QueryType queryType){
         ArrayList<FileProps> files;
         ArrayList<String> text = new ArrayList<>();
         String[] pname = path.split(File.pathSeparator);
@@ -18,46 +19,46 @@ public class FileDir {
         // Заполняем массив и сортируем его
         files = sort(fillList(path));
 
-        // Заголовок
-        text.add("<!DOCTYPE HTML>");
-        text.add("<head>");
-        text.add("<meta http-equiv=\\\"content-type\\\" content=\\\"text/html; charset=utf-8\\\" />");
-        text.add("<title>Список файлов в папке " + path + "</title>");
-        text.add("</head>");
+        text.add(HtmlWrap.getHead(path, "html/text", 0));
 
-        // Тело
-        text.add("<body>");
-        text.add("<table width=\"100%\">");
-        text.add("<tr><td><a href=\"../index.html\">..</a></tr>");
+        if (queryType == QueryType.GET) {
+            // Тело
+            text.add("  <body>\n");
+            text.add("    <table width='100%'>\n");
+            text.add("      <tr><td><a href='../'>..</a></tr>\n");
 
-        files.forEach(e -> {
-            if (e.isDir == 1) {
-                text.add("<tr><td><a href=\"" + e.name + "/index.html\">" + e.name + "</a></td></tr>");
-            } else {
-                text.add("<tr><td><a href=\"" + e.name + "\">" + e.name + "</a></td>" +
-                        "<td>" + e.size + "</td>" +
-                        "<td>" + e.modifyDate + "</td></tr>");
+            files.forEach(e -> {
+                try {
+                    if (e.isDir == 1) {
+                        text.add("      <tr><td><a href=\"" + URLEncoder.encode(e.name, "windows-1251") + "/\">" + e.name + "</a></td></tr>\n");
+                    } else {
+                        text.add("      <tr><td><a href=\"" + URLEncoder.encode(e.name, "windows-1251") + "\">" + e.name + "</a></td>" +
+                                "<td>" + e.size + "</td>" +
+                                "<td>" + e.modifyDate + "</td></tr>\n");
+                    }
+                    ;
+                } catch (UnsupportedEncodingException e1) {
+                    e1.printStackTrace();
+                }
+            });
+
+
+            text.add("    </table>\n");
+            text.add("  </body>\n");
             }
-            ;
 
-
-        });
-
-
-        text.add("</table>");
-
-        OutputStreamWriter s = new OutputStreamWriter(os);
+        text.add(HtmlWrap.getTail());
 
         text.forEach(e -> {
             try {
-                s.write(e);
+                os.write(e);
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
         });
 
         try {
-            s.flush();
+            os.flush();
         } catch (IOException e) {
             e.printStackTrace();
         };

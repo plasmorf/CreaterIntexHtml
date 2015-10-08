@@ -1,9 +1,8 @@
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import javax.activation.MimetypesFileTypeMap;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URLDecoder;
 
 /**
  * Created by plasmorf on 08.10.2015.
@@ -13,11 +12,13 @@ public class Processing implements Runnable {
 
     Processing(Socket psocket){
         socket = psocket;
-
+        System.out.println("Create processing");
     }
 
     @Override
     public void run() {
+        System.out.println("Run processing");
+
         InputStreamReader in = null;
         OutputStreamWriter out = null;
         StringBuilder queryStr = new StringBuilder();
@@ -45,26 +46,75 @@ public class Processing implements Runnable {
             e.printStackTrace();
         }
 
+        System.out.println("Reciving query: "+ queryStr.toString());
         //получаем команду и ее аргументы
 
-        String cmd = queryStr.toString().split(" ")[0].trim().toUpperCase();
-
-        if (cmd.compareTo("GET") == 1)  {
-            getResource(out);
+        String[] arg = queryStr.toString().split(" ");
+        String cmd = arg[0].trim().toUpperCase();
+        String path = null;
+        try {
+            path = URLDecoder.decode(arg[1], "windows-1251");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
         }
-        else if (cmd.compareTo("HEAD") == 1){
-            getHead(out);
-        }
 
+        switch (cmd){
+            case "GET" : {getResource(path, out, QueryType.GET); break;}
+            case "HEAD": {getResource(path, out, QueryType.HEAD); break;}
+            default:
+                try {
+                    out.write("501 Not implemented");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+        }
 
     }
 
-    private void getResource(OutputStreamWriter out){
+    private void getResource(String path, OutputStreamWriter out, QueryType queryType){
+        System.out.println("GET recieved");
+
+        if (path.lastIndexOf("/")==path.length()-1) {
+            FileDir fd = new FileDir(path, out, queryType);
+
+            try {
+                out.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            ;
+        }
+        else{
+            File file = new File(path);
+            InputStreamReader isr = null;
+            char buf[] = new char[4096];
+            int len;
+
+            try {
+                isr = new InputStreamReader(new FileInputStream(file));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                out.write("HTTP/1.0 200 OK\r\n");
+                //минимально необходимые заголовки, тип и длина
+                out.write("Content-Type: " + new MimetypesFileTypeMap().getContentType(file) + "\r\n");
+                out.write("Content-Length: " + file.length());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                while((len = isr.read(buf)) >= 0)
+                    out.write(buf);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            //file.
+        }
 
     };
 
-    private void getHead(OutputStreamWriter out){
-
-    };
 
 }

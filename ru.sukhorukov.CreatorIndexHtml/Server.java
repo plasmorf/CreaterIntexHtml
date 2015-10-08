@@ -13,9 +13,12 @@ public class Server implements Runnable {
 
     Server(int port){
         this.port = port;
+        System.out.println("Created server. port"+port);
     };
 
     public void run () {
+
+        System.out.println("Server running");
 
         ServerSocket socket = null;
         socks = new ArrayList<>();
@@ -35,7 +38,9 @@ public class Server implements Runnable {
                 e.printStackTrace();
             }
 
+            System.out.println("Start new thread");
             treatds.add(new Thread(new Processing(socks.get(socks.size() - 1))));
+            treatds.get(treatds.size() - 1).start();
 
         }
     }

@@ -6,7 +6,10 @@ import java.io.*;
 public class Main {
     public static void main(String[] args) {
 
+        Server s = new Server(8888);
+        s.run();
 
+/*
         File f = new File(args[0] + "index.html");
         OutputStream s = null;
         try {
@@ -23,6 +26,7 @@ public class Main {
         } catch (IOException e) {
             e.printStackTrace();
         };
+*/
 
     }
 }
