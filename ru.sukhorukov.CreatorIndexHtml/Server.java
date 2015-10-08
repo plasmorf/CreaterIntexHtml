@@ -6,16 +6,24 @@ import java.util.ArrayList;
 /**
  * Created by plasmorf on 08.10.2015.
  */
-public class Server {
+public class Server implements Runnable {
+    int port;
+    ArrayList<java.net.Socket> socks = new ArrayList<>();
+    ArrayList<Thread> treatds = new ArrayList<>();
 
-    public Server () {
+    Server(int port){
+        this.port = port;
+    };
+
+    public void run () {
 
         ServerSocket socket = null;
-        ArrayList<java.net.Socket> socks = new ArrayList<>();
-        ArrayList<Thread> treatds = new ArrayList<>();
+        socks = new ArrayList<>();
+        treatds = new ArrayList<>();
 
         try {
-            socket = new ServerSocket();
+            socket = new ServerSocket(port);
+
         } catch (IOException e1) {
             e1.printStackTrace();
         }
@@ -27,9 +35,14 @@ public class Server {
                 e.printStackTrace();
             }
 
-            treatds.add(new Thread(new Processing(socks[socks.size()-1])));
+            treatds.add(new Thread(new Processing(socks.get(socks.size() - 1))));
 
         }
     }
+
+    int getThredCount(){
+        return treatds.size();
+    }
+
 
 }
