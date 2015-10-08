@@ -8,4 +8,5 @@ public class FileProps {
     Date modifyDate;
     long size;
     int isDir;
+    //String html;
 }
