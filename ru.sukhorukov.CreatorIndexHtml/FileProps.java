@@ -7,4 +7,5 @@ public class FileProps {
     String name;
     Date modifyDate;
     long size;
+    int isDir;
 }
