@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.URLEncoder;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -9,12 +10,12 @@ import java.util.stream.Stream;
 public class FileDir {
     private String name;
 
-    public FileDir(String path, OutputStreamWriter os, QueryType queryType){
+    public FileDir(String path, OutputStreamWriter os, QueryType queryType) throws IOException{
         ArrayList<FileProps> files;
         ArrayList<String> text = new ArrayList<>();
         String[] pname = path.split(File.pathSeparator);
 
-        name = pname[pname.length-1]; // substring(path.lastIndexOf(File.pathSeparator), path.length());
+        name = pname[pname.length-1];
 
         // Заполняем массив и сортируем его
         files = sort(fillList(path));
@@ -33,17 +34,22 @@ public class FileDir {
             text.add("  <body>\n");
             text.add("    <table width='100%'>\n");
             text.add("      <tr><td><a href='../'>..</a></tr>\n");
+//            File file = new File(path);
+//            if (file.getParent() != null)
+//                text.add("      <tr><td><a href='" + URLEncoder.encode(new File(name).getParent(), "windows-1251") + "/'>..</a></tr>\n");
+//
+            MessageFormat df = new MessageFormat("{0, date, yyyy/MM/dd}");
 
             files.forEach(e -> {
                 try {
+
                     if (e.isDir == 1) {
-                        text.add("      <tr><td><a href=\"" + URLEncoder.encode(e.name, "windows-1251") + "/\">" + e.name + "</a></td></tr>\n");
+                            text.add("      <tr><td><a href='" + URLEncoder.encode(e.name, "utf-8") + "/'>" + e.name + "</a></td></tr>\n");
                     } else {
-                        text.add("      <tr><td><a href=\"" + URLEncoder.encode(e.name, "windows-1251") + "\">" + e.name + "</a></td>" +
+                        text.add("      <tr><td><a href='" + URLEncoder.encode(e.name, "windows-1251") + "'>" + e.name + "</a></td>" +
                                 "<td>" + e.size + "</td>" +
-                                "<td>" + e.modifyDate + "</td></tr>\n");
+                                "<td>" + df.format(new Object[]{e.modifyDate}) + "</td></tr>\n");
                     }
-                    ;
                 } catch (UnsupportedEncodingException e1) {
                     e1.printStackTrace();
                 }
@@ -64,11 +70,7 @@ public class FileDir {
             }
         });
 
-        try {
-            os.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        };
+        os.flush();
 
     };
 

@@ -9,9 +9,11 @@ import java.net.URLDecoder;
  */
 public class Processing implements Runnable {
     Socket socket;
+    String startPath;
 
-    Processing(Socket psocket){
+    Processing(Socket psocket, String startPath){
         socket = psocket;
+        this.startPath = startPath;
         System.out.println("Create processing");
     }
 
@@ -20,114 +22,106 @@ public class Processing implements Runnable {
         System.out.println("Run processing");
 
         InputStreamReader in = null;
-        OutputStreamWriter out = null;
+        OutputStream out = null;
         StringBuilder queryStr = new StringBuilder();
-        char c;
+        int c;
 
         try {
             in = new InputStreamReader(socket.getInputStream());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
-        try {
-            out = new OutputStreamWriter(socket.getOutputStream());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            out = socket.getOutputStream();
 
-        try {
-            while((c = (char) in.read())!=-1 && c != 10 && c!=13){
+             while ((c = in.read()) != -1 && c != 10 && c != 13) {
 
-                queryStr.append((char)c);
+                queryStr.append((char) c);
 
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+             }
 
-        System.out.println("Reciving query: "+ queryStr.toString());
-        //получаем команду и ее аргументы
+             System.out.println("Reciving query: " + queryStr.toString());
+             //получаем команду и ее аргументы
 
-        String[] arg = queryStr.toString().split(" ");
-        String cmd = arg[0].trim().toUpperCase();
-        String path = null;
-        try {
-            path = URLDecoder.decode(arg[1], "windows-1251");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+             String[] arg = queryStr.toString().split(" ");
+             String cmd = arg[0].trim().toUpperCase();
+             String path = null;
+             try {
+                 path = URLDecoder.decode(arg[1], "utf-8");
+                 if (startPath.contains(path)){
+                     path = startPath;
+                 }
+                 else {
+                     path = startPath + path ;
+                 }
+             } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+             }
 
-        switch (cmd){
-            case "GET" : {getResource(path, out, QueryType.GET); break;}
-            case "HEAD": {getResource(path, out, QueryType.HEAD); break;}
-            default:
-                try {
-                    out.write("501 Not implemented");
-                } catch (IOException e) {
-                    e.printStackTrace();
+             switch (cmd) {
+                    case "GET": {
+                        getResource(path, out, QueryType.GET);
+                        break;
+                    }
+                    case "HEAD": {
+                        getResource(path, out, QueryType.HEAD);
+                        break;
+                    }
+                    default:
+                        try {
+                            out.write("501 Not implemented".getBytes());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                 }
-        }
 
-        try {
-            out.flush();
+                out.close();
 
-            out.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void getResource(String path, OutputStreamWriter out, QueryType queryType) {
-        System.out.println("GET recieved");
+    private void sendFile(File file, OutputStream out)throws IOException{
+        BufferedInputStream isr = new BufferedInputStream(new FileInputStream(file));
+        int data;
+
+        out.write("HTTP/1.0 200 OK\r\n".getBytes());
+        String contentType = new MimetypesFileTypeMap().getContentType(file);
+
+        System.out.println("ContentType = " + contentType);
+
+        out.write(("Content-Type: " + contentType + "\r\n").getBytes());
+        out.write(("Content-Length: " + file.length() + "\r\n").getBytes());
+        out.write("Connection: close \r\n\r\n".getBytes());
+
+        while((data = isr.read()) >= 0)
+            out.write(data);
+
+        isr.close();
+
+    }
+
+    private void getResource(String path, OutputStream out, QueryType queryType) throws IOException{
+        System.out.println("GET recieved: "+ path);
         File file = new File(path);
 
         if (!file.exists()){
-            try {
-                out.write("404 Not Found");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+
+            out.write("HTTP/1.0 200 OK\r\n".getBytes());
+            out.write("404 Not Found\r\n".getBytes());
         }
         else if (file.isDirectory()) {
-            FileDir fd = new FileDir(path, out, queryType);
+            File indexFile = new File(path+"index.html");
 
-            try {
-                out.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+            if (indexFile.exists()){
+//                sendIndex(indexFile, out);
+                sendFile(indexFile, out);
             }
-            ;
+            else {
+                FileDir fd = new FileDir(path, new OutputStreamWriter(out), queryType);
+            }
+
         }
         else{
-            InputStreamReader isr = null;
-            char buf[] = new char[4096];
-            int len;
-
-            try {
-                isr = new InputStreamReader(new FileInputStream(file));
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-
-            try {
-                out.write("HTTP/1.0 200 OK\r\n");
-                //минимально необходимые заголовки, тип и длина
-                String contentType = new MimetypesFileTypeMap().getContentType(file);
-                out.write("Content-Type: " + contentType + "\r\n");
-                out.write("Content-Length: " + file.length() + "\r\n");
-                out.write("Connection: close \r\n");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            try {
-                while((len = isr.read(buf)) >= 0)
-                    out.write(buf);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            //file.
+            sendFile(file, out);
         }
 
     };

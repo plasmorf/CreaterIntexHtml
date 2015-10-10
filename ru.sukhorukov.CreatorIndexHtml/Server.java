@@ -8,11 +8,13 @@ import java.util.ArrayList;
  */
 public class Server implements Runnable {
     int port;
+    String startPath;
     ArrayList<java.net.Socket> socks = new ArrayList<>();
     ArrayList<Thread> treatds = new ArrayList<>();
 
-    Server(int port){
+    Server(int port, String startPath){
         this.port = port;
+        this.startPath = startPath;
         System.out.println("Created server. port"+port);
     };
 
@@ -39,7 +41,7 @@ public class Server implements Runnable {
             }
 
             System.out.println("Start new thread");
-            treatds.add(new Thread(new Processing(socks.get(socks.size() - 1))));
+            treatds.add(new Thread(new Processing(socks.get(socks.size() - 1), startPath)));
             treatds.get(treatds.size() - 1).start();
 
         }

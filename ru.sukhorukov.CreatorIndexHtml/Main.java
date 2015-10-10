@@ -6,7 +6,7 @@ import java.io.*;
 public class Main {
     public static void main(String[] args) {
 
-        Server s = new Server(8888);
+        Server s = new Server(8888, args[0]);
         s.run();
 
 /*
